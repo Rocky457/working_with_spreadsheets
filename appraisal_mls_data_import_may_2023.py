@@ -117,7 +117,7 @@ def show_data_window(df):
     dom_button.pack()
 
     '''
-    # create a button to show the stats of the csv sheet called
+    # create a button to show the stats of the get_correls sheet called
     corr_button = customtkinter.CTkButton(window, text="Correlation check", width=20, command=lambda: get_correls(window))
     corr_button.pack()
     '''
