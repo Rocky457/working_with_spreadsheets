@@ -1,0 +1,821 @@
+import customtkinter as ctk
+from customtkinter import filedialog
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import pandas as pd
+from matplotlib import dates as mdates
+
+plt.style.use('dark_background')
+
+class ctkApp:
+
+    def __init__(self):
+        global originaldataframe
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("dark-blue")
+        self.root = ctk.CTk()
+        self.root.geometry("1600x950+200x200")
+        self.root.title("Dynamic Scatterplot")
+        self.root.update()
+        self.frame = ctk.CTkFrame(master=self.root,
+                                  height=self.root.winfo_height() * 0.25,
+                                  width=self.root.winfo_width() * 0.35,
+                                  fg_color="darkblue")
+        self.frame.place(relx=0.21 , rely=0.026)
+
+        self.frame2 = ctk.CTkFrame(master=self.root,
+                                  height=self.root.winfo_height() * 0.25,
+                                  width=self.root.winfo_width() * 0.35)
+        self.frame2.place(relx=0.21, rely=0.275)
+        self.frame3 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.25,
+                                   width=self.root.winfo_width() * 0.35,
+                                   fg_color="green")
+        self.frame3.place(relx=0.21, rely=0.495)
+
+        self.frame4 = ctk.CTkFrame(master=self.root,
+                                  height=self.root.winfo_height() * 0.25,
+                                  width=self.root.winfo_width() * 0.35,
+                                  fg_color="blue")
+        self.frame4.place(relx=0.572, rely=0.025)
+
+        self.frame5 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.25,
+                                   width=self.root.winfo_width() * 0.35,
+                                   fg_color="green")
+        self.frame5.place(relx=0.572, rely=0.275)
+
+        self.frame6 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.25,
+                                   width=self.root.winfo_width() * 0.35,
+                                   fg_color="red")
+        self.frame6.place(relx=0.572, rely=0.495)
+
+        self.frame7 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.23,
+                                   width=self.root.winfo_width() * .91,
+                                   fg_color="red")
+        self.frame7.place(relx=0.025, rely=0.755)
+
+        self.frame8 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.23,
+                                   width=self.root.winfo_width() * .91,
+                                   fg_color="blue")
+        self.frame8.place(relx=0.1850, rely=0.755)
+
+        self.frame9 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.23,
+                                   width=self.root.winfo_width() * .91,
+                                   fg_color="green")
+        self.frame9.place(relx=0.3450, rely=0.755)
+
+        self.frame10 = ctk.CTkFrame(master=self.root,
+                                   height=self.root.winfo_height() * 0.23,
+                                   width=self.root.winfo_width() * .91,
+                                   fg_color="yellow")
+        self.frame10.place(relx=0.505, rely=0.755)
+
+        self.frame11 = ctk.CTkFrame(master=self.root,
+                                    height=self.root.winfo_height() * 0.23,
+                                    width=self.root.winfo_width() * .91,
+                                    fg_color="gray")
+        self.frame11.place(relx=0.67, rely=0.755)
+
+        self.frame12 = ctk.CTkFrame(master=self.root,
+                                    height=self.root.winfo_height() * 0.23,
+                                    width=self.root.winfo_width() * .91,
+                                    fg_color="blue")
+        self.frame12.place(relx=0.830, rely=0.755)
+        '''
+        self.input = ctk.CTkEntry(master=self.root,
+                                  placeholder_text=100,
+                                  justify='center',
+                                  width=200,
+                                  height=30,
+                                  fg_color="darkblue")
+        self.input.insert(0, 100)
+        self.input.place(relx=0.025, rely=0.120)
+        self.optionmenu_1 = ctk.CTkOptionMenu(self.root, dynamic_resizing=False, width=200, height=25, values=["Value 1", "Value 2", "Value Long Long Long"])
+        self.optionmenu_1.grid(row=0, column=0, padx=20, pady=(30, 10))
+        self.optionmenu_1.place(relx=0.025, rely=.270)
+
+        self.optionmenu_2 = ctk.CTkOptionMenu(self.root, dynamic_resizing=False, width=200, height=25,
+                                              values=["Value 1", "Value 2", "Value Long Long Long"])
+        self.optionmenu_2.grid(row=0, column=0, padx=20, pady=(30, 10))
+        self.optionmenu_2.place(relx=0.025, rely=.320)
+        '''
+        self.button = ctk.CTkButton(master=self.root,
+                                    text="Select File",
+                                    width=200,
+                                    height=50,
+                                    command=self.selectfile_shortcut)
+        self.button.place(relx=0.025, rely=0.05)
+        self.button2 = ctk.CTkButton(master=self.root,
+                                    text="update window",
+                                    width=200,
+                                    height=50,
+                                    command=self.update)
+
+        self.button2.place(relx=0.025, rely=.13)
+
+
+        self.plotframe2 = ctk.CTkFrame(master=self.root, height=100, width=200, fg_color="black")
+        self.plotframe2.place(relx=0.030, rely=0.215)
+
+        # Create a label for correlation value
+        self.correlation_label = ctk.CTkLabel(master=self.plotframe2, text="price / date ")
+        self.correlation_label.pack(side=ctk.TOP)
+
+        self.root.mainloop()
+
+    def update(self):
+        self.price_window()
+        self.dom_window()
+        self.price_sqft()
+        self.price_acres()
+        self.price_age()
+        self.price_belowgradefinishedarea()
+        self.data_stats()
+        self.barpool()
+        self.barconcessions()
+        self.barbathroomsfull()
+        self.barbathroomshalfbath()
+        self.barArchitecturalStyle()
+        self.barBasementYN()
+
+
+    def price_window(self):
+        global originaldataframe
+
+        #fig, ax = plt.subplots()
+        #fig.set_size_inches(1, 1.7)
+        df = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "CloseDate", "ClosePrice"]
+        df = df[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+
+        # Create Pandas dataframe
+        dfindex = df.set_index("StandardStatus")
+
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        dfindex = dfindex[~dfindex.index.isin(exclude_statuses)]
+
+        # Converting CloseDate to Date
+        dfindex['CloseDate'] = pd.to_datetime(dfindex['CloseDate'])
+
+        # Sort
+        dfindex = dfindex.sort_values(by="CloseDate")
+
+        price_date = dfindex['CloseDate']
+        price_close = dfindex['ClosePrice']
+
+        # Convert 'ClosePrice' to numeric
+        price_close = pd.to_numeric(price_close, errors='coerce')
+        price_date_num = pd.to_numeric(price_date)
+
+        fig = plt.figure(figsize=(5.73,2.40))
+
+        # Plot the data points
+        fig = plt.plot_date(price_date, price_close)
+
+        # Fit a linear regression line
+        slope, intercept = np.polyfit(price_date_num, price_close, 1)
+        linear_trendline = slope * price_date_num + intercept
+        fig = plt.plot(price_date, linear_trendline, label='Linear Trendline', color='r', linestyle='--', markersize=3)
+
+        # Format the date labels on the x-axis to show by month
+        fig = plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+        fig = plt.gcf().autofmt_xdate()
+        fig = plt.title('Sales Price over Time')
+        fig = plt.xlabel('Close Date')
+        fig = plt.ylabel('Close Price')
+        fig = plt.tight_layout()
+
+        # Calculate the median value and forecasted median value
+        median_value = price_close.median()
+        forecasted_median_value = linear_trendline[-1]
+
+        # Calculate the percent change
+        percent_change = (((median_value - forecasted_median_value) / forecasted_median_value)/-1) * 100
+
+        # Display the percent change in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2, text=f"Percent Change: {percent_change:.2f}%")
+        result_label.pack(side=ctk.TOP)
+
+        # Calculate and update the correlation value
+        datepricecorr = np.corrcoef(price_date_num, price_close)[0, 1]
+        self.correlation_label.configure(text=f"Price / Date Correlation:{datepricecorr:.2f}")
+
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.root)
+        canvas.draw()
+        canvas.get_tk_widget().place(relx=0.21, rely=0.025)
+
+        self.root.update()
+
+    def dom_window(self):
+        global originaldataframe
+        fig1, ax1 = plt.subplots()
+        fig1.set_size_inches(5, 2.7)
+        df2 = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "CloseDate", "DaysOnMarket"]
+        df2 = df2[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df2.fillna(value=np.nan, inplace=True)
+
+        # Create Pandas dataframe
+        dfindex2 = df2.set_index("StandardStatus")
+
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        dfindex2 = dfindex2[~dfindex2.index.isin(exclude_statuses)]
+
+        # Converting CloseDate to Date
+        dfindex2['CloseDate'] = pd.to_datetime(dfindex2['CloseDate'])
+
+        # Sort
+        dfindex = dfindex2.sort_values(by="CloseDate")
+
+        price_date = dfindex2['CloseDate']
+        price_dom = dfindex2['DaysOnMarket']
+
+        # Convert 'Closedom' to numeric
+        price_dom = pd.to_numeric(price_dom, errors='coerce')
+        price_date_num = pd.to_numeric(price_date)
+
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig2 = plt.figure(figsize=(5.73,2.40))
+
+        # Create a bar chart
+        fig2 = plt.bar(price_date, price_dom, width=20, align='center', alpha=0.7)
+
+        # Format the date labels on the x-axis to show by month
+        fig2 = plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+        fig2 = plt.gcf().autofmt_xdate()
+        fig2 = plt.title('DOM over Time')
+        fig2 = plt.xlabel('Close Date')
+        fig2 = plt.ylabel('Close DOM')
+        fig2 = plt.tight_layout()
+
+        # Fit a linear regression line
+        slope, intercept = np.polyfit(price_date_num, price_dom, 1)
+        linear_trendline = slope * price_date_num + intercept
+        fig1 = plt.plot(price_date, linear_trendline, label='Linear Trendline', color='r', linestyle='--', markersize=3)
+
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Median DOM = {price_dom.median()}")
+        result_label.pack(side=ctk.TOP)
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame2)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        self.root.update()
+
+    def price_sqft(self):
+        global originaldataframe
+        fig2, ax = plt.subplots()
+        fig2.set_size_inches(5.73, 2.4)
+        df3 = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "AboveGradeFinishedArea"]
+        df3 = df3[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df3.fillna(value=np.nan, inplace=True)
+
+        #Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        df3 = df3[~df3["StandardStatus"].isin(exclude_statuses)]
+
+        # Create a scatterplot
+        ax.scatter( df3['AboveGradeFinishedArea'],df3['ClosePrice'], alpha=0.9)
+
+        # Calculate the linear regression line
+        slope, intercept = np.polyfit(df3['AboveGradeFinishedArea'], df3['ClosePrice'], 1)
+        linear_trendline = slope * df3['AboveGradeFinishedArea'] + intercept
+
+        # Plot the linear trendline
+        ax.plot(df3['AboveGradeFinishedArea'], linear_trendline, color='r', linestyle='--', label='Linear Trendline')
+
+        #Set Labels and title
+        fig3 = plt.title('Sales Price vs Above grade GLA')
+        fig3 = plt.xlabel('GLA')
+        fig3 = plt.ylabel('Sales Price')
+        fig3 = plt.tight_layout()
+
+        # Calculate the median value of price_dom
+        median_sqft = df3['AboveGradeFinishedArea'].median()
+
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Median sqft = {median_sqft}")
+        result_label.pack(side=ctk.TOP)
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame3)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        self.root.update()
+
+    def price_acres(self):
+        global originaldataframe
+        fig4, ax = plt.subplots()
+        fig4.set_size_inches(5.73, 2.4)
+        df4 = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "LotSizeAcres"]
+        df4 = df4[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df4.fillna(value=np.nan, inplace=True)
+
+        #Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        df4 = df4[~df4["StandardStatus"].isin(exclude_statuses)]
+
+        y = df4['LotSizeAcres']
+        price = df4['ClosePrice']
+
+        # Create a scatterplot
+        ax.scatter( y,price, alpha=0.9)
+
+        # Calculate the linear regression line
+        slope, intercept = np.polyfit(y, price, 1)
+        linear_trendline = slope * y + intercept
+
+        # Plot the linear trendline
+        ax.plot(y, linear_trendline, color='r', linestyle='--', label='Linear Trendline')
+
+        #Set Labels and title
+        fig5 = plt.title('Sales Price vs Acres')
+        fig5 = plt.xlabel('Acres')
+        fig5 = plt.ylabel('Sales Price')
+        fig5 = plt.tight_layout()
+
+        # Calculate the median value of price_dom
+        median_sqft = y.median()
+
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Median acres = {median_sqft}")
+        result_label.pack(side=ctk.TOP)
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame4)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        self.root.update()
+
+    def price_age(self):
+        global originaldataframe
+        fig5, ax = plt.subplots()
+        fig5.set_size_inches(5.73, 2.4)
+        df = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "Age"]
+        df = df[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+
+        y = df['Age']
+        price = df['ClosePrice']
+
+        # Create a scatterplot
+        ax.scatter(y, price, alpha=0.9)
+
+        #linear trendline
+        slope, intercept = np.polyfit(y, price, 1)
+        linear_trendline = slope * y + intercept
+        ax.plot(y, linear_trendline, color='r', linestyle='--', label='Linear Trendline')
+
+        #polynomial trendline using NumPy polyfit
+        coefficients = np.polyfit(np.arange(len(y)), price, 1)
+        trendline = np.poly1d(coefficients)
+        fig5 = plt.plot(y, trendline(np.arange(len(y))), label='Trendline', color='g', linestyle='--', markersize=3)
+        trendline_eq = f'Trendline: {coefficients[0]:.4f}x + {coefficients[1]:.2f}'
+        fig5 = plt.text(0.2, .9, trendline_eq, transform=plt.gca().transAxes, fontsize=10, color='g')
+
+
+        # Set Labels and title
+        fig5 = plt.title('Sales Price vs Age')
+        fig5 = plt.xlabel('Age')
+        fig5 = plt.ylabel('Sales Price')
+        fig5 = plt.tight_layout()
+
+        # Calculate the median value of price_dom
+        median_sqft = y.median()
+
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Median age = {median_sqft}")
+        result_label.pack(side=ctk.TOP)
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame5)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        self.root.update()
+
+    def price_belowgradefinishedarea(self):
+        global originaldataframe
+        fig4, ax = plt.subplots()
+        fig4.set_size_inches(5.73, 2.4)
+        df = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "BelowGradeFinishedArea"]
+        df = df[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+
+        # Remove rows where BelowGradeFinishedArea is 0
+        df = df[df['BelowGradeFinishedArea'] != 0]
+
+        y = df['BelowGradeFinishedArea']
+        price = df['ClosePrice']
+
+        # Create a scatterplot
+        ax.scatter(y, price, alpha=0.9)
+
+        # Set Labels and title
+        fig5 = plt.title('Sales Price vs BelowGradeFinishedArea')
+        fig5 = plt.xlabel('BelowGradeFinishedArea')
+        fig5 = plt.ylabel('Sales Price')
+        fig5 = plt.tight_layout()
+
+        # Calculate the median value of price_dom
+        median_sqft = y.median()
+
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Median blowgrade finished area = {median_sqft}")
+        result_label.pack(side=ctk.TOP)
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame6)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        self.root.update()
+
+    def barpool(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "Pool"]
+
+        df = df[desired_columns]
+
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+
+        # Remove rows where "StandardStatus" is in the exclude_statuses list
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+
+        # Sort
+        df = df.sort_values(by="ClosePrice")
+
+        #Pool Bar Chart
+        pooly = df[df['Pool'] == "No Pool"]['ClosePrice'].mean()
+        pooln = df[df['Pool'] != "No Pool"]['ClosePrice'].mean()
+        poolvalue = round((pooln - pooly),0)
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels = ['No Pool', 'With Pool']
+        # Heights for the bars
+        heights = [pooly, pooln]# Heights for the bars
+        plt.bar(labels, heights, width=0.75, align='center', alpha=0.7)
+        # Display the median values as text on the chart
+        plt.text(0, pooly, f'$ {round((pooly / 1000), 0):.0f}k', ha='center', va='top')
+        plt.text(1, pooln, f'$ {round((pooln / 1000), 0):.0f}k', ha='center', va='top')
+        plt.title('Pool')
+        #plt.xlabel('Pool')
+        #plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2, text=f"Pool adds = {poolvalue}")
+        result_label.pack(side=ctk.TOP)
+        #End Chart
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame7)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+    def barconcessions(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "ConcessionsAmount"]
+        df = df[desired_columns]
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+        df['ConcessionsAmount'].fillna(value=0, inplace=True)
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+        # Sort
+        df = df.sort_values(by="ClosePrice")
+        # Concessions Chart
+        no_concessions = df[df['ConcessionsAmount'] == 0]['ClosePrice'].mean()
+        ys_concessions = df[df['ConcessionsAmount'] > 1]['ClosePrice'].mean()
+        diff_concessions = round((ys_concessions - no_concessions),0)
+        concessshortno = int(no_concessions / 1000)
+        concessshortys = int(ys_concessions / 1000)
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels2 = ['No Con', 'Con']
+        # Heights for the bars
+        heights2 = [no_concessions, ys_concessions]  # Heights for the bars
+        plt.bar(labels2, heights2, width=0.75, align='center', alpha=0.7)
+        # Display the median values as text on the chart
+        plt.text(0, no_concessions, f'$ {round((no_concessions / 1000), 0):.0f}k', ha='center', va='top')
+        plt.text(1, ys_concessions, f'$ {round((ys_concessions / 1000), 0):.0f}k', ha='center', va='top')
+        plt.title('concessions')
+        # plt.xlabel('Pool')
+        # plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2, text=f"concessions = {diff_concessions}")
+        result_label.pack(side=ctk.TOP)
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame2
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame8)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+    def barbathroomsfull(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "BathroomsFull"]
+        df = df[desired_columns]
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+        df['BathroomsFull'].fillna(value=0, inplace=True)
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+        # Concessions Chart
+        bath1 = df[df['BathroomsFull'] == 1]['ClosePrice'].mean()
+        bath2 = df[df['BathroomsFull'] == 2]['ClosePrice'].mean()
+        bath3 = df[df['BathroomsFull'] == 3]['ClosePrice'].mean()
+
+        diff_baths1vs2 = round((bath2 - bath1),0)
+        diff_baths2vs3 = round((bath2 - bath1), 0)
+        diff1vs2short = int(diff_baths1vs2 / 1000)
+        diff2vs3short = int(diff_baths2vs3 / 1000)
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels = ['1FB', '2FB', '3FB']
+        # Heights for the bars
+        heights = [bath1, bath2, bath3]  # Heights for the bars
+        plt.bar(labels, heights, width=0.85, align='center', alpha=0.7)
+        # Display the median values as text on the chart
+        plt.text(0, bath1, f'$ {round((bath1 / 1000),0):.0f}k', ha='center', va='top')
+        plt.text(1, bath2, f'$ {round((bath2 / 1000),0):.0f}k', ha='center', va='top')
+        plt.text(2, bath3, f'$ {round((bath3 / 1000),0):.0f}k', ha='center', va='top')
+        plt.title('Full Baths')
+        # plt.xlabel('Pool')
+        # plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2, text=f"Full Baths 1vs2= {diff1vs2short} 2vs3={diff2vs3short}")
+        result_label.pack(side=ctk.TOP)
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame9
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame9)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+    def barbathroomshalfbath(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "BathroomsHalf"]
+        df = df[desired_columns]
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+        #df['BBathroomsHalf'].fillna(value=0, inplace=True)
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+        # Concessions Chart
+        bath1 = df[df['BathroomsHalf'] == 1]['ClosePrice'].mean()
+        bath2 = df[df['BathroomsHalf'] == 2]['ClosePrice'].mean()
+        bath3 = df[df['BathroomsHalf'] == 3]['ClosePrice'].mean()
+
+        diff_baths1vs2 = round((bath2 - bath1),0)
+        diff_baths2vs3 = round((bath2 - bath1), 0)
+        diff1vs2short = int(diff_baths1vs2 / 1000)
+        diff2vs3short = int(diff_baths2vs3 / 1000)
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels = ['1HB', '2HB', '3HB']
+        # Heights for the bars
+        heights = [bath1, bath2, bath3]  # Heights for the bars
+        plt.bar(labels, heights, width=0.85, align='center', alpha=0.7)
+        # Display the median values as text on the chart
+        plt.text(0, bath1, f'$ {round((bath1 / 1000),0):.0f}k', ha='center', va='top')
+        plt.text(1, bath2, f'$ {round((bath2 / 1000),0):.0f}k', ha='center', va='top')
+        plt.text(2, bath3, f'$ {round((bath3 / 1000),0):.0f}k', ha='center', va='top')
+        plt.title('Half Baths')
+        # plt.xlabel('Pool')
+        # plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+        # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2, text=f"Half Baths 1vs2= {diff1vs2short} 2vs3={diff2vs3short}")
+        result_label.pack(side=ctk.TOP)
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame9
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame10)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+    def barArchitecturalStyle(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "ArchitecturalStyle"]
+        df = df[desired_columns]
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+        #df['ArchitecturalStyle'].fillna(value=0, inplace=True)
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+
+        styleranch = df.loc[df['ArchitecturalStyle'] == "Ranch/Rambler"]['ClosePrice'].mean()
+        stylecape = df.loc[df['ArchitecturalStyle'] == "Cape Cod"]['ClosePrice'].mean()
+        stylecolonal = df.loc[df['ArchitecturalStyle'] == "Colonial"]['ClosePrice'].mean()
+
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels = ['Ranch', 'Cape Cod', 'Colonial']
+        # Heights for the bars
+        heights = [styleranch, stylecape, stylecolonal]  # Heights for the bars
+        plt.bar(labels, heights, width=0.85, align='center', alpha=0.5)
+        # Display the median values as text on the chart
+        plt.text(0, styleranch, f'$ {round((styleranch / 1000),0):.0f}k', ha='center', va='top',fontsize=10)
+        plt.text(1, stylecape, f'$ {round((stylecape / 1000),0):.0f}k', ha='center', va='top',fontsize=10)
+        plt.text(2, stylecolonal, f'$ {round((stylecolonal / 1000),0):.0f}k', ha='center', va='top',fontsize=10)
+        plt.title('Style')
+        # plt.xlabel('Pool')
+        # plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame9
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame11)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+    def barBasementYN(self):
+        global originaldataframe
+        fig, ax = plt.subplots()
+        fig.set_size_inches(5, 2.7)
+        df = originaldataframe.copy()
+        # Keep only the desired columns
+        desired_columns = ["StandardStatus", "ClosePrice", "BasementYN"]
+        df = df[desired_columns]
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+        #df['BasementYN'].fillna(value=0, inplace=True)
+        # Define statuses to exclude
+        exclude_statuses = ["Active", "Expired", "Active Under Contract", "Pending", "Withdrawn"]
+        df = df[~df["StandardStatus"].isin(exclude_statuses)]
+
+        bsmtno = df.loc[df['BasementYN'] == "FALSE"]['ClosePrice'].mean()
+        bsmtyes = df.loc[df['BasementYN'] == "TRUE"]['ClosePrice'].mean()
+
+        # Create a smaller figure by specifying figsize (adjust the width and height as needed)
+        fig = plt.figure(figsize=(2.50, 2.40))
+        # Create labels for the bars
+        labels = ['None', 'Yes']
+        # Heights for the bars
+        heights = [bsmtno, bsmtyes]  # Heights for the bars
+        plt.bar(labels, heights, width=0.85, align='center', alpha=0.5)
+        # Display the median values as text on the chart
+        plt.text(0, bsmtno, f'$ {round((bsmtno / 1000),0):.0f}k', ha='center', va='top',fontsize=10)
+        plt.text(1, bsmtyes, f'$ {round((bsmtyes / 1000),0):.0f}k', ha='center', va='top',fontsize=10)
+
+        plt.title('Basement Y/N')
+        # plt.xlabel('Pool')
+        # plt.ylabel('Mean ClosePrice')
+        plt.tight_layout()
+
+        # Create a FigureCanvasTkAgg with master=self.frame2 to display in frame9
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.frame12)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+        self.root.update()
+
+
+    def selectfile(self):
+        global originaldataframe
+
+        # Open a file dialog to select the CSV file
+        file_path = filedialog.askopenfile(mode='r',initialdir='C:/Users/Rocky/PycharmProjects/PycharmProject/PythonAppraisalDataProject/',filetypes=[('CSV files','*.csv')])
+
+        # Check if the user selected a file
+        if file_path:
+            # Read the CSV file into a Pandas DataFrame
+            originaldataframe = pd.read_csv(file_path)
+
+    def selectfile_shortcut(self):
+        global originaldataframe
+
+        # Open a file dialog to select the CSV file
+        file_path = 'C:/Users/Rocky/PycharmProjects/pythonProject/PythonAppraisalDataProject/Testset1.csv'
+        originaldataframe = pd.read_csv(file_path)
+
+    def data_stats(self):
+        global originaldataframe
+        df = originaldataframe.copy()
+
+        # Fill empty values in the entire DataFrame with NaN
+        df.fillna(value=np.nan, inplace=True)
+
+        rowcount = df.shape[0]
+
+       # Display the median value in plotframe2
+        result_label = ctk.CTkLabel(master=self.plotframe2,
+                                    text=f"Number of data points = {rowcount}")
+        result_label.pack(side=ctk.TOP)
+        self.root.update()
+
+
+if __name__ == "__main__":
+    CTK_Window = ctkApp()
+
+'''
+# Fit a polynomial regression line using NumPy polyfit
+        #coefficients = np.polyfit(np.arange(len(price_date)), price_close, 1)
+        #trendline = np.poly1d(coefficients)
+        #fig = plt.plot_date(price_date, trendline(np.arange(len(price_date))), label='Trendline', color='r',
+        #                     linestyle='--', markersize=3)
+        # Add the trendline equation to the chart
+        #trendline_eq = f'Trendline: {coefficients[0]:.4f}x + {coefficients[1]:.2f}'
+        #fig = plt.text(0.2, .9, trendline_eq, transform=plt.gca().transAxes, fontsize=10, color='r')
+'''
